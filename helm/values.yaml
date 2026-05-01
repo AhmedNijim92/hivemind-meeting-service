@@ -1,0 +1,21 @@
+replicaCount: 2
+image:
+  repository: hivemind/meeting-service
+  tag: 1.0.0
+  pullPolicy: IfNotPresent
+service:
+  type: ClusterIP
+  port: 8085
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "250m"
+  limits:
+    memory: "1Gi"
+    cpu: "500m"
+env:
+  SPRING_PROFILES_ACTIVE: prod
+  EUREKA_SERVER: http://eureka-server:8761/eureka
+  CASSANDRA_CONTACT_POINTS: cassandra
+  KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+  REDIS_HOST: redis
