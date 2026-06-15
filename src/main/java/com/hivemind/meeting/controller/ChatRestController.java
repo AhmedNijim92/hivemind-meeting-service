@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 public class ChatRestController
 {
     private final RedisTemplate<String, String> redisTemplate;
+    private final ObjectMapper objectMapper;
     private static final String CHAT_KEY_PREFIX = "chat:messages:";
     private static final long MESSAGE_TTL_HOURS = 24;
     private static final int MAX_MESSAGES = 200;
@@ -89,14 +92,14 @@ public class ChatRestController
 
     private String toJson(ChatMessageDto msg)
     {
-        return String.format(
-            "{\"id\":\"%s\",\"conversationId\":\"%s\",\"senderId\":\"%s\",\"senderName\":\"%s\",\"content\":\"%s\",\"imageUrl\":%s,\"timestamp\":\"%s\"}",
-            msg.getId(), msg.getConversationId(), msg.getSenderId(),
-            msg.getSenderName().replace("\"", "\\\""),
-            msg.getContent().replace("\"", "\\\"").replace("\n", "\\n"),
-            msg.getImageUrl() != null ? "\"" + msg.getImageUrl() + "\"" : "null",
-            msg.getTimestamp()
-        );
+        try
+        {
+            return objectMapper.writeValueAsString(msg);
+        }
+        catch (JsonProcessingException e)
+        {
+            throw new RuntimeException("Failed to serialize chat message", e);
+        }
     }
 
     @Data
