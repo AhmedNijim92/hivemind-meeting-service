@@ -31,10 +31,11 @@ public class LiveKitTokenController
     @Value("${livekit.api-secret:secrethivemind456789012345678901234567}")
     private String apiSecret;
 
+    @Value("${livekit.url:}")
+    private String livekitUrl;
+
     /**
      * Generate a LiveKit token for a participant to join a room.
-     * Host gets full permissions (publish, subscribe, admin).
-     * Regular participants get subscribe-only by default.
      */
     @PostMapping("/{meetingId}/token")
     public ResponseEntity<TokenResponse> getToken(
@@ -52,18 +53,12 @@ public class LiveKitTokenController
         videoGrant.put("room", roomName);
         videoGrant.put("roomJoin", true);
         videoGrant.put("canSubscribe", true);
+        videoGrant.put("canPublish", true);
+        videoGrant.put("canPublishData", true);
 
         if (isHost) {
-            // Host can publish and manage room
-            videoGrant.put("canPublish", true);
-            videoGrant.put("canPublishData", true);
             videoGrant.put("roomAdmin", true);
             videoGrant.put("roomCreate", true);
-        } else {
-            // Regular participants: can publish by default (host can mute them via room admin)
-            videoGrant.put("canPublish", true);
-            videoGrant.put("canPublishData", true);
-            videoGrant.put("roomAdmin", false);
         }
 
         // Build JWT claims for LiveKit
@@ -73,9 +68,8 @@ public class LiveKitTokenController
         claims.put("name", userName);
         claims.put("iss", apiKey);
         claims.put("nbf", new Date().getTime() / 1000);
-        claims.put("exp", (new Date().getTime() / 1000) + 86400); // 24h
+        claims.put("exp", (new Date().getTime() / 1000) + 86400);
 
-        // Generate JWT
         SecretKey key = Keys.hmacShaKeyFor(apiSecret.getBytes(StandardCharsets.UTF_8));
         String token = Jwts.builder()
                 .claims(claims)
@@ -86,7 +80,7 @@ public class LiveKitTokenController
 
         return ResponseEntity.ok(TokenResponse.builder()
                 .token(token)
-                .url("ws://livekit-livekit-server.hivemind.svc.cluster.local:80")
+                .url(livekitUrl.isEmpty() ? "__RESOLVE_FROM_ORIGIN__" : livekitUrl)
                 .room(roomName)
                 .identity(identity)
                 .build());

@@ -33,7 +33,7 @@ eureka:
 livekit:
   api-key: ${LIVEKIT_API_KEY:APIhivemind123}
   api-secret: ${LIVEKIT_API_SECRET:secrethivemind456789012345678901234567}
-  url: ${LIVEKIT_URL:ws://livekit-livekit-server:80}
+  url: ${LIVEKIT_URL:}
 
 management:
   endpoints:
